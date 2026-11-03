@@ -455,7 +455,9 @@
     }
 
     .match-pct {
-        font-size: 62px;
+        /* 【本次修改】匹配百分比数字放大字号（62px → 96px），
+           明显大于下方人物名字的 32px，形成大小对比；紫色渐变与居中布局不变 */
+        font-size: 96px;
         font-weight: 900;
         background: linear-gradient(135deg, #9B84C0, #7B5EA7);
         -webkit-background-clip: text;
@@ -467,6 +469,29 @@
         font-size: 32px;
         font-weight: 900;
         margin: 10px 0 6px;
+    }
+
+    /* 人物朝代与形象标签：柔和紫色小徽章，居中显示 */
+    .person-meta {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 auto 14px;
+        padding: 5px 16px;
+        border-radius: 20px;
+        background: #F5F1FB;
+        border: 1px solid #E9E2F5;
+        font-size: 14px;
+        color: #7B5EA7;
+        font-weight: 700;
+        letter-spacing: .5px;
+        line-height: 1.5;
+        vertical-align: middle;
+    }
+
+    .person-meta .meta-sep {
+        color: #B9A8D4;
+        font-weight: 400;
     }
 
     .person-title {
@@ -608,7 +633,7 @@
         font-size: 17px;
     }
 
-    /* ============ 【本次新增】03 共同底色卡片内的维度进度条（与八维结构视觉一致） ============ */
+    /* ============ 03 共同底色卡片内的维度进度条（与八维结构视觉一致） ============ */
     .common-progress {
         display: flex;
         align-items: center;
@@ -635,7 +660,7 @@
         min-width: 42px;
         text-align: right;
     }
-    /* 【本次新增】正文包裹层，让 canvas 读取时能排除进度条百分比文本 */
+    /* 正文包裹层，让 canvas 读取时能排除进度条百分比文本 */
     .common-body {
         /* 继承 .note 的字体与行高，无需额外样式 */
     }
@@ -807,8 +832,19 @@
             font-size: 30px;
         }
 
+        /* 【本次修改】移动端匹配百分比也同步放大，仍明显大于人物名字 */
+        .match-pct {
+            font-size: 78px;
+        }
+
         .person-title {
             font-size: 15px;
+        }
+
+        /* 移动端人物朝代与形象标签略缩 */
+        .person-meta {
+            font-size: 13px;
+            padding: 4px 14px;
         }
 
         .quote,
@@ -917,10 +953,13 @@
     <!-- ============ 结果页 ============ -->
     <section class="result hidden" id="result">
         <div class="top-card" id="reportHead" data-seal="史">
-            <div class="top-sub">你的性格匹配结果</div>
+            <!-- 【本次修改】顶部结果卡片标题：你的性格匹配结果 → 你的历史人物匹配结果 -->
+            <div class="top-sub">你的历史人物匹配结果</div>
             <div class="top-icon-emoji">🏛️</div>
             <div class="match-pct" id="matchRate"></div>
             <h1 class="result-name" id="resultName"></h1>
+            <!-- 人物所属朝代与形象标签，位于人物名称下方、匹配百分比与标签之间 -->
+            <div class="person-meta" id="resultMeta"></div>
             <div class="person-title" id="resultTitle"></div>
             <div class="tags" id="resultTags"></div>
             <div class="dominant-chip" id="dominant"></div>
@@ -972,7 +1011,8 @@
         </section>
 
         <section class="report-section">
-            <div class="section-title">06 · 你的三句人物台词</div>
+            <!-- 【本次修改】第六模块标题：你的三句人物台词 → 你的三句内心表达 -->
+            <div class="section-title">06 · 你的三句内心表达</div>
             <div class="three" id="lines"></div>
         </section>
 
@@ -1484,7 +1524,7 @@
         $("#answerList").innerHTML = opts.map((o, j) =>
             `<button class="choice answer ${state.answers[i] === j ? "selected" : ""}" data-i="${j}">` +
             `<span class="letter">${"ABCD"[j]}</span>` +
-            `<span><strong>${o[0]}</strong><small>更接近「${o[1]}」的行为倾向</small></span>` +
+            `<span><strong>${o[0]}</strong></span>` +
             `</button>`
         ).join("");
 
@@ -1530,6 +1570,14 @@
         const similarity = Math.max(76, Math.min(97, Math.round(100 - ranked[0].d / 4.8)));
 
         $("#resultName").textContent = person.name;
+        /* 渲染人物所属朝代与形象标签
+           - 数据直接读取 person.era（朝代）与 person.role（形象标签，例如"一统型帝王"）
+           - 不改动人物库数据，也不影响匹配算法
+           - 使用 innerHTML 组装带样式 span，实现"秦 · 一统型帝王"的柔和徽章 */
+        $("#resultMeta").innerHTML =
+            `<span class="meta-era">${person.era}</span>` +
+            `<span class="meta-sep">·</span>` +
+            `<span class="meta-role">${person.role}</span>`;
         $("#resultTitle").textContent = `${a.label}型人格 · 现实中的性格底色`;
         $("#resultQuote").textContent = `“${a.quote}”`;
         $("#reportHead").dataset.seal = person.name.slice(0, 1);
@@ -1545,8 +1593,8 @@
         const top = DIMS.map((d, i) => [d, scores[i]]).sort((x, y) => y[1] - x[1]).slice(0, 3);
         state.result = { person, a, scores, similarity, top };
 
-        /* 【本次修改】03 共同底色卡片：
-           标题 → 新增横向进度条 + 百分比 → 原有正文文案；
+        /* 03 共同底色卡片：
+           标题 → 横向进度条 + 百分比 → 原有正文文案；
            s 即 top[i][1]，是本维度得分（38-98），直接作为百分比显示。
            正文用 .common-body 包裹，方便 canvas 读取时排除进度条百分比文本。 */
         $("#commonGround").innerHTML = top.map(([d, s], i) =>
@@ -1656,7 +1704,7 @@
         const blockHeight = (value, maxWidth, size, lineHeight, weight) =>
             split(value, maxWidth, size, weight).length * lineHeight;
 
-        /* 【本次修改】common 数据读取：
+        /* common 数据读取：
            正文优先从 .common-body 读取，避免把进度条百分比文本混入；
            分数直接读取 state.result.top[i][1]，不依赖 DOM 文本。 */
         const common = [...document.querySelectorAll("#commonGround .note")].map((node, i) => {
@@ -1684,7 +1732,7 @@
 
         const portraitH = 112 + blockHeight(portrait, innerW, 25, 42, 400) + 36;
         const dimensionsH = 112 + DIMS.length * 48 + 34;
-        /* 【本次修改】03 共同底色卡片高度：新增进度条约 34px，88 → 122，minH 210 → 240 */
+        /* 03 共同底色卡片高度：包含进度条约 34px */
         const commonInnerH = Math.max(...common.map(item => 122 + blockHeight(item.body, colW - 36, 21, 36, 400)), 240);
         const commonH = 112 + commonInnerH + 34;
         const realityH = 112 + blockHeight(reality, innerW - 36, 23, 39, 400) + 70;
@@ -1735,7 +1783,8 @@
 
         // 顶部主卡
         round(margin, y, cardW, topH, 34, "#FFFFFF", "#E9E2F5");
-        text("你的性格匹配结果", W / 2, y + 42, 25, "#7B5EA7", 800, "center");
+        /* 【本次修改】导出图标题同步为「你的历史人物匹配结果」 */
+        text("你的历史人物匹配结果", W / 2, y + 42, 25, "#7B5EA7", 800, "center");
         text("🏛️", W / 2, y + 86, 54, "#333333", 400, "center");
 
         const pctGradient = c.createLinearGradient(W / 2 - 120, 0, W / 2 + 120, 0);
@@ -1748,7 +1797,18 @@
         c.fillText($("#matchRate").textContent.trim(), W / 2, y + 154);
 
         text($("#resultName").textContent.trim(), W / 2, y + 264, 56, "#333333", 900, "center");
-        text($("#resultTitle").textContent.trim(), W / 2, y + 336, 24, "#7E6F94", 500, "center");
+
+        /* 在导出图中渲染朝代与形象标签（位于人物名下方、人格标签上方） */
+        const metaEl = $("#resultMeta");
+        if (metaEl && metaEl.textContent.trim()) {
+            const metaText = metaEl.textContent.trim();
+            c.font = font(22, 600);
+            const metaW = c.measureText(metaText).width + 48;
+            round((W - metaW) / 2, y + 320, metaW, 38, 19, "#F5F1FB", "#E9E2F5");
+            text(metaText, W / 2, y + 328, 22, "#7B5EA7", 600, "center");
+        }
+
+        text($("#resultTitle").textContent.trim(), W / 2, y + 372, 24, "#7E6F94", 500, "center");
 
         const tagValues = [...document.querySelectorAll("#resultTags .tag")].map(node => node.textContent.trim());
         c.font = font(21, 700);
@@ -1756,20 +1816,20 @@
         const tagTotal = tagWidths.reduce((sum, width) => sum + width, 0) + (tagValues.length - 1) * 12;
         let tagX = (W - tagTotal) / 2;
         tagValues.forEach((value, index) => {
-            round(tagX, y + 385, tagWidths[index], 42, 21, "#EDE7F6", "#E9E2F5");
-            text(value, tagX + tagWidths[index] / 2, y + 393, 21, "#7B5EA7", 700, "center");
+            round(tagX, y + 420, tagWidths[index], 42, 21, "#EDE7F6", "#E9E2F5");
+            text(value, tagX + tagWidths[index] / 2, y + 428, 21, "#7B5EA7", 700, "center");
             tagX += tagWidths[index] + 12;
         });
 
         const dominant = $("#dominant").textContent.trim();
         c.font = font(21, 700);
         const dominantW = c.measureText(dominant).width + 44;
-        round((W - dominantW) / 2, y + 447, dominantW, 44, 22, "#EDE7F6");
-        text(dominant, W / 2, y + 455, 21, "#7B5EA7", 700, "center");
+        round((W - dominantW) / 2, y + 482, dominantW, 44, 22, "#EDE7F6");
+        text(dominant, W / 2, y + 490, 21, "#7B5EA7", 700, "center");
 
-        round(margin + pad, y + 515, innerW, 104, 20, "#F5F1FB", "#E9E2F5");
-        text("人物心声", margin + pad + 24, y + 535, 21, "#7B5EA7", 800);
-        paragraph(quote, margin + pad + 24, y + 570, innerW - 48, 23, 36, "#544868", 400);
+        round(margin + pad, y + 548, innerW, 104, 20, "#F5F1FB", "#E9E2F5");
+        text("人物心声", margin + pad + 24, y + 566, 21, "#7B5EA7", 800);
+        paragraph(quote, margin + pad + 24, y + 600, innerW - 48, 23, 36, "#544868", 400);
 
         y += topH + gap;
 
@@ -1799,16 +1859,14 @@
             round(x, bodyY, colW, commonInnerH, 20, "#FAF8FD", "#E9E2F5");
             text(item.title, x + 18, bodyY + 24, 21, "#333333", 800);
 
-            /* 【本次新增】横向进度条 + 百分比（与八维结构视觉一致） */
+            /* 横向进度条 + 百分比（与八维结构视觉一致） */
             const barX = x + 18;
             const barY = bodyY + 60;
             const pctStr = String(item.score) + "%";
             c.font = font(16, 700);
             const pctWidth = c.measureText(pctStr).width;
             const barW = colW - 36 - pctWidth - 10;
-            // 轨道：浅紫底
             round(barX, barY, barW, 8, 4, "#EBE4F5");
-            // 填充：紫渐变，最低保留 6px 可见宽度
             if (item.score > 0) {
                 const fillW = Math.max(6, barW * item.score / 100);
                 const fillGrad = c.createLinearGradient(barX, 0, barX + fillW, 0);
@@ -1816,10 +1874,8 @@
                 fillGrad.addColorStop(1, "#7B5EA7");
                 round(barX, barY, fillW, 8, 4, fillGrad);
             }
-            // 百分比文字（16px 700，紫字，与轨道垂直居中）
             text(pctStr, barX + barW + 8, barY - 4, 16, "#7B5EA7", 700);
 
-            // 原有正文（下移到 bodyY + 92）
             paragraph(item.body, x + 18, bodyY + 92, colW - 36, 21, 36, "#544868", 400);
         });
         y += commonH + gap;
@@ -1842,7 +1898,8 @@
         y += riskH + gap;
 
         // 06 三句人物台词
-        bodyY = section("06 · 你的三句人物台词", y, linesH);
+        /* 【本次修改】导出图第六模块标题同步为「06 · 你的三句内心表达」 */
+        bodyY = section("06 · 你的三句内心表达", y, linesH);
         lines.forEach((value, index) => {
             const x = margin + pad + index * (colW + colGap);
             round(x, bodyY, colW, linesInnerH, 20, "#FAF8FD", "#E9E2F5");
@@ -1974,4 +2031,3 @@
 </script>
 </body>
 </html>
-<!-- （注：内容由AI生成） -->
